@@ -1,2 +1,2 @@
-# wind-tube-2
+# wind-tube
 Created with CodeSandbox
