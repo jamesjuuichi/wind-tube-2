@@ -60,8 +60,10 @@ export function initializeCanvas() {
     if (!data) {
       return;
     }
-    const { analyser, dataArray } = data;
-    analyser.getByteFrequencyData(dataArray);
+    const { analyser, frequencyDomainArray, timeDomainArray } = data;
+    analyser.getByteFrequencyData(frequencyDomainArray);
+
+    analyser.getFloatTimeDomainData(timeDomainArray);
     pickUp(stepScale);
     sync();
     log(stepScale);
@@ -72,15 +74,16 @@ export function initializeCanvas() {
     if (!data || !context) {
       return;
     }
-    const { dataArray, dataSize } = data;
+    const { frequencyDomainArray, frequencyDomainSize } = data;
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = "#202020";
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-    const barWidth = (canvas.width - dataSize + 1) / dataSize;
+    const barWidth =
+      (canvas.width - frequencyDomainSize + 1) / frequencyDomainSize;
 
-    for (let i = 0; i < dataSize; i++) {
-      const barHeight = dataArray[i];
+    for (let i = 0; i < frequencyDomainSize; i++) {
+      const barHeight = frequencyDomainArray[i];
       context.fillStyle = "rgb(" + (barHeight + 100) + ", 50, 50)";
       context.fillRect(
         (barWidth + 1) * i,

@@ -1,25 +1,45 @@
 interface AnalyserDataInterface {
-  dataSize: number;
-  dataArray: Uint8Array | void;
+  frequencyDomainSize: number;
+  frequencyDomainArray: Uint8Array | void; // frequency domain
+  timeDomainSize: number;
+  timeDomainArray: Float32Array | void;
   analyser: AnalyserNode | void;
   sampleRate: number;
 }
 export const data: AnalyserDataInterface = {
-  dataSize: 0,
-  dataArray: undefined,
+  frequencyDomainSize: 0,
+  frequencyDomainArray: undefined,
+  timeDomainSize: 0,
+  timeDomainArray: undefined,
   analyser: undefined,
   sampleRate: 0
 };
 
 export function getData() {
-  const { analyser, dataArray, dataSize, sampleRate } = data;
-  if (!analyser || !dataArray || dataSize === 0 || sampleRate === 0) {
+  const {
+    analyser,
+    frequencyDomainSize,
+    frequencyDomainArray,
+    timeDomainSize,
+    timeDomainArray,
+    sampleRate
+  } = data;
+  if (
+    !analyser ||
+    !frequencyDomainArray ||
+    frequencyDomainSize === 0 ||
+    !timeDomainArray ||
+    timeDomainSize === 0 ||
+    sampleRate === 0
+  ) {
     return false;
   }
   return {
     analyser,
-    dataArray,
-    dataSize,
+    frequencyDomainArray,
+    frequencyDomainSize,
+    timeDomainArray,
+    timeDomainSize,
     sampleRate
   };
 }

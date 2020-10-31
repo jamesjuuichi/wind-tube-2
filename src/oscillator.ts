@@ -2,11 +2,13 @@ import { data } from "./data/record";
 import {
   SAMPLE_PICK_UP_FRAME_COUNT,
   MS_PER_FRAME,
-  NOTE_ARRAY
+  NOTE_ARRAY,
+  NOISE_MAX_LENGTH
 } from "./constants";
 import { Sound } from "./Sound";
 
 const TIME_UNIT = SAMPLE_PICK_UP_FRAME_COUNT * MS_PER_FRAME;
+const SEMI_TONE_POWER = 1 / 12;
 
 export function playback(callback: undefined | Function) {
   if (data.recording) {
@@ -23,23 +25,68 @@ export function playback(callback: undefined | Function) {
     clearTimeout(endTimerId);
   }
 
-  function getNearestNoteFromRawFrequency(frequency: number) {
+  function getNearestNoteFromRawFrequency(
+    rawFrequency: number,
+    rootError: number = 0
+  ) {
+    const frequency = rawFrequency - rootError;
     const firstExceed = NOTE_ARRAY.findIndex((value) => value > frequency);
     if (firstExceed === -1) {
-      return NOTE_ARRAY[NOTE_ARRAY.length - 1];
+      return {
+        error: frequency - NOTE_ARRAY[NOTE_ARRAY.length - 1],
+        note: NOTE_ARRAY[NOTE_ARRAY.length - 1]
+      };
     }
     if (firstExceed === 0) {
-      return NOTE_ARRAY[0];
+      return {
+        error: frequency - NOTE_ARRAY[0],
+        note: NOTE_ARRAY[0]
+      };
     }
 
-    return NOTE_ARRAY[firstExceed] - frequency <
-      frequency - NOTE_ARRAY[firstExceed - 1]
-      ? NOTE_ARRAY[firstExceed]
-      : NOTE_ARRAY[firstExceed - 1];
+    const d = Math.log2(NOTE_ARRAY[firstExceed] / frequency);
+    const returnedNote =
+      d < SEMI_TONE_POWER / 2
+        ? NOTE_ARRAY[firstExceed]
+        : NOTE_ARRAY[firstExceed - 1];
+
+    return {
+      error: rawFrequency - returnedNote,
+      note: returnedNote
+    };
+  }
+
+  function isNoise(dataArray: number[], currentFrame: number) {
+    let length = 0;
+    while (
+      dataArray.length > currentFrame &&
+      length < NOISE_MAX_LENGTH &&
+      dataArray[currentFrame] !== 0
+    ) {
+      ++currentFrame;
+      ++length;
+    }
+    if (length < 2) {
+      return true;
+    }
+    let diffInPitch = 0;
+    for (let i = 1; i < length; ++i) {
+      const index = currentFrame - length + i;
+      diffInPitch =
+        diffInPitch +
+        Math.abs(Math.log2(dataArray[index] / dataArray[index - 1]));
+    }
+    if (diffInPitch > SEMI_TONE_POWER * (length - 1)) {
+      return true;
+    }
+    return false;
   }
 
   function getNextNote(dataArray: number[], currentFrame: number) {
-    while (dataArray.length > currentFrame && dataArray[currentFrame] === 0) {
+    while (
+      (dataArray[currentFrame] === 0 || isNoise(dataArray, currentFrame)) &&
+      dataArray.length > currentFrame
+    ) {
       ++currentFrame;
     }
     if (dataArray.length <= currentFrame) {
@@ -50,10 +97,16 @@ export function playback(callback: undefined | Function) {
       };
     }
     const startFrame = currentFrame;
-    const note = getNearestNoteFromRawFrequency(dataArray[currentFrame]);
+    const { error, note } = getNearestNoteFromRawFrequency(
+      dataArray[currentFrame]
+    );
     let duration = 1;
     while (dataArray.length > ++currentFrame) {
-      if (getNearestNoteFromRawFrequency(dataArray[currentFrame]) === note) {
+      const { note: nextNote } = getNearestNoteFromRawFrequency(
+        dataArray[currentFrame],
+        error
+      );
+      if (nextNote === note) {
         ++duration;
       } else {
         break;

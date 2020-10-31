@@ -1,4 +1,5 @@
 import { data } from "./data/analyser";
+import { createPitchDetector } from "./pitchDetector";
 const SAMPLING_SIZE = 8192;
 
 export function pipeStream(stream: MediaStream) {
@@ -11,8 +12,11 @@ export function pipeStream(stream: MediaStream) {
 
   source.connect(analyser);
 
-  data.dataSize = dataSize;
-  data.dataArray = new Uint8Array(dataSize);
+  data.frequencyDomainSize = dataSize;
+  data.frequencyDomainArray = new Uint8Array(dataSize);
+  data.timeDomainSize = SAMPLING_SIZE;
+  data.timeDomainArray = new Float32Array(SAMPLING_SIZE);
   data.analyser = analyser;
   data.sampleRate = context.sampleRate;
+  createPitchDetector(data.sampleRate);
 }

@@ -1,8 +1,7 @@
+import pitchDetector from "./pitchDetector";
 import { SAMPLE_PICK_UP_FRAME_COUNT } from "./constants";
 import { getData } from "./data/analyser";
 import { data as liveData } from "./data/liveData";
-import { findMaxima } from "./utils/findMaxima";
-import { binToFrequency } from "./utils/frequencyBinToFrequency";
 
 let localCounter = -1;
 
@@ -22,14 +21,14 @@ export function pickUp(stepScale: number) {
     localCounter = SAMPLE_PICK_UP_FRAME_COUNT - 1;
   }
 
-  const { dataArray, dataSize, sampleRate } = data;
+  const { timeDomainArray } = data;
 
   if ((localCounter % SAMPLE_PICK_UP_FRAME_COUNT) - stepScale < 0) {
-    const max = findMaxima(dataArray);
-    if (max.index === -1) {
+    const note = pitchDetector.detect(timeDomainArray);
+    if (!note || note > 5000) {
       liveData.currentNote = 0;
       return;
     }
-    liveData.currentNote = binToFrequency(max.index, dataSize, sampleRate);
+    liveData.currentNote = note;
   }
 }

@@ -5,10 +5,11 @@ export const MS_PER_FRAME = 1000 / FPS;
  * NOTE: this is based on BPM.
  * We pick up X samples every minute.
  */
-export const SAMPLE_PICK_UP_RATE = 360;
+export const SAMPLE_PICK_UP_RATE = 720;
+export const NOISE_MAX_LENGTH = 5;
 export const SAMPLE_PICK_UP_FRAME_COUNT = (FPS * 60) / SAMPLE_PICK_UP_RATE;
 
-export const MAX_RECORD_POINT_COUNT = FPS * 2;
+export const MAX_RECORD_POINT_COUNT = FPS * 8;
 
 const ROOT = 440;
 
